@@ -308,10 +308,75 @@ function initLightbox() {
     }, 400);
   }
 
-  // Click handlers on gallery photos
+  // Gesture-aware touch & tap handlers for gallery photos
   allPhotos.forEach((img, i) => {
+    const frame = img.closest('.photo-window__frame') || img;
     img.style.cursor = 'none';
-    img.addEventListener('click', () => openLightbox(i));
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let isTouchActive = false;
+    let holdTimer = null;
+
+    frame.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchStartTime = Date.now();
+      isTouchActive = true;
+
+      // Hold finger down -> reveal colored version after 80ms
+      holdTimer = setTimeout(() => {
+        if (isTouchActive) {
+          frame.classList.add('touch-active');
+        }
+      }, 80);
+    }, { passive: true });
+
+    frame.addEventListener('touchmove', (e) => {
+      if (!isTouchActive) return;
+      const touch = e.touches[0];
+      const moveDist = Math.hypot(touch.clientX - touchStartX, touch.clientY - touchStartY);
+
+      // If finger moves more than 6px (user is scrolling), cancel color preview & tap
+      if (moveDist > 6) {
+        isTouchActive = false;
+        clearTimeout(holdTimer);
+        frame.classList.remove('touch-active');
+      }
+    }, { passive: true });
+
+    frame.addEventListener('touchend', (e) => {
+      clearTimeout(holdTimer);
+      const wasActive = isTouchActive;
+      isTouchActive = false;
+      frame.classList.remove('touch-active');
+
+      if (!wasActive) return;
+
+      const duration = Date.now() - touchStartTime;
+      const touch = e.changedTouches[0];
+      const moveDist = Math.hypot(touch.clientX - touchStartX, touch.clientY - touchStartY);
+
+      // Clean tap (duration < 350ms and finger stayed still) -> open lightbox!
+      if (duration < 350 && moveDist < 10) {
+        openLightbox(i);
+      }
+    });
+
+    frame.addEventListener('touchcancel', () => {
+      clearTimeout(holdTimer);
+      isTouchActive = false;
+      frame.classList.remove('touch-active');
+    });
+
+    // Desktop Click (only triggers for mouse users)
+    frame.addEventListener('click', () => {
+      if (!window.matchMedia('(pointer: coarse)').matches) {
+        openLightbox(i);
+      }
+    });
   });
 
   // Navigation
