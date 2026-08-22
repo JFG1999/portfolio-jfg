@@ -1900,18 +1900,10 @@ a {
   }
 
   /* ========================================== */
-  /* RETRO WINDOWS MOBILE PLACEMENT             */
+  /* RETRO WINDOWS: HIDE ON MOBILE              */
   /* ========================================== */
   .retro-window {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    margin: 2rem auto !important;
-    width: min(92%, 340px) !important;
-    animation: none !important; /* Save CPU/GPU on mobile */
-    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.7), 4px 4px 16px rgba(0, 0, 0, 0.85);
+    display: none !important;
   }
 
   /* ========================================== */
