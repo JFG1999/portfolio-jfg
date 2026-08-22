@@ -1080,24 +1080,29 @@ a {
 .hero__scroll-hint {
   position: absolute;
   bottom: 2.5rem;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: max-content;
   z-index: var(--z-content);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.8rem;
   opacity: 0;
-  transform: translateX(-50%) translateY(20px);
+  transform: translateY(20px);
   animation: hero-scroll-reveal 0.6s ease-out 1.8s forwards;
+  pointer-events: none;
 }
 
 .hero__scroll-text {
   font-family: var(--font-typewriter);
   font-size: 0.65rem;
   letter-spacing: 0.35em;
+  margin-right: -0.35em; /* Exactly offsets CSS letter-spacing */
   color: var(--dream-amber);
   text-transform: uppercase;
+  text-align: center;
 }
 
 .hero__scroll-line {
@@ -1892,7 +1897,18 @@ a {
 
   .hero__scroll-hint {
     bottom: 1.2rem;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    width: max-content;
     gap: 0.4rem;
+  }
+
+  .hero__scroll-text {
+    font-size: 0.62rem;
+    letter-spacing: 0.3em;
+    margin-right: -0.3em;
+    text-align: center;
   }
 
   .hero__scroll-line {
