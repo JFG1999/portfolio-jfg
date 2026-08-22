@@ -1834,8 +1834,26 @@ a {
   /* HERO SECTION MOBILE POLISH                 */
   /* ========================================== */
   .hero {
-    min-height: 100dvh;
-    padding: 3rem 1.2rem;
+    height: 100svh;
+    min-height: 100svh;
+    max-height: 100svh;
+    padding: 2.5rem 1.2rem;
+    overflow: hidden;
+  }
+
+  /* Lock hero background completely stable on mobile (no zoom, no shift on scroll) */
+  .hero__comic-bg,
+  .hero__comic-bg .scene-layer,
+  .hero .parallax-layer {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
+    object-fit: cover !important;
+    object-position: center !important;
   }
 
   .hero__title {
