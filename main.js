@@ -7,14 +7,27 @@ function initPreloader() {
   const preloader = document.getElementById('preloader');
   if (!preloader) return;
 
-  window.addEventListener('load', () => {
+  let hidden = false;
+  const hidePreloader = () => {
+    if (hidden) return;
+    hidden = true;
+    preloader.classList.add('preloader--hidden');
     setTimeout(() => {
-      preloader.classList.add('preloader--hidden');
-      preloader.addEventListener('transitionend', () => {
+      if (preloader.parentNode) {
         preloader.remove();
-      }, { once: true });
-    }, 1200);
-  });
+      }
+    }, 900);
+  };
+
+  if (document.readyState === 'complete') {
+    setTimeout(hidePreloader, 600);
+  } else {
+    window.addEventListener('load', () => {
+      setTimeout(hidePreloader, 600);
+    });
+    // Fallback: Never hang longer than 1.5 seconds under any circumstances
+    setTimeout(hidePreloader, 1500);
+  }
 }
 
 /* ========================================== */
