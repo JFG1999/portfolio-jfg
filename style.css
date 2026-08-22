@@ -1837,14 +1837,18 @@ a {
     height: 100svh;
     min-height: 100svh;
     max-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     padding: 2.5rem 1.2rem;
     overflow: hidden;
+    position: relative;
   }
 
   /* Lock hero background completely stable on mobile (no zoom, no shift on scroll) */
   .hero__comic-bg,
-  .hero__comic-bg .scene-layer,
-  .hero .parallax-layer {
+  .hero__comic-bg .scene-layer {
     position: absolute !important;
     inset: 0 !important;
     width: 100% !important;
@@ -1857,10 +1861,17 @@ a {
   }
 
   .hero__title {
+    position: relative !important;
+    z-index: var(--z-content);
     padding: 1.5rem 0.8rem;
     width: 100%;
     max-width: 100vw;
     border-radius: 0;
+    transform: none !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     background: radial-gradient(
       ellipse 90% 70% at 50% 50%,
       rgba(8, 9, 13, 0.72) 0%,
