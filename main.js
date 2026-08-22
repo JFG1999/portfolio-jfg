@@ -152,7 +152,8 @@ function initScrollReveal() {
   const elements = document.querySelectorAll('.reveal-on-scroll');
   if (!elements.length) return;
 
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || isMobile) {
     elements.forEach((el) => el.classList.add('revealed'));
     return;
   }
@@ -167,8 +168,8 @@ function initScrollReveal() {
       });
     },
     {
-      threshold: 0.15,
-      rootMargin: '0px 0px -50px 0px',
+      threshold: 0.01,
+      rootMargin: '350px 0px 350px 0px',
     }
   );
 
@@ -430,27 +431,29 @@ function initLivingEyes() {
     }, { passive: true });
   }
 
-  // Random twitch & slower, heavier blinks for tired eyes
-  setInterval(() => {
-    const randomEye = eyes[Math.floor(Math.random() * eyes.length)];
-    if (!randomEye) return;
+  // Random twitch & slower, heavier blinks for tired eyes (Desktop only)
+  if (!window.matchMedia('(pointer: coarse)').matches && window.innerWidth > 768) {
+    setInterval(() => {
+      const randomEye = eyes[Math.floor(Math.random() * eyes.length)];
+      if (!randomEye) return;
 
-    const fatigue = parseFloat(randomEye.style.getPropertyValue('--eye-fatigue') || '0');
-    // Tired eyes stay closed slightly longer (120ms fresh -> 240ms exhausted)
-    const closeDuration = 120 + Math.round(fatigue * 140);
+      const fatigue = parseFloat(randomEye.style.getPropertyValue('--eye-fatigue') || '0');
+      // Tired eyes stay closed slightly longer (120ms fresh -> 240ms exhausted)
+      const closeDuration = 120 + Math.round(fatigue * 140);
 
-    const lids = randomEye.querySelectorAll('.dream-eye__lid');
-    lids.forEach(lid => {
-      lid.style.transform = 'scaleY(1)';
-    });
+      const lids = randomEye.querySelectorAll('.dream-eye__lid');
+      lids.forEach(lid => {
+        lid.style.transform = 'scaleY(1)';
+      });
 
-    setTimeout(() => {
-      const topLid = randomEye.querySelector('.dream-eye__lid--top');
-      const bottomLid = randomEye.querySelector('.dream-eye__lid--bottom');
-      if (topLid) topLid.style.transform = `scaleY(${(fatigue * 0.45).toFixed(2)})`;
-      if (bottomLid) bottomLid.style.transform = `scaleY(${(fatigue * 0.15).toFixed(2)})`;
-    }, closeDuration);
-  }, 4000);
+      setTimeout(() => {
+        const topLid = randomEye.querySelector('.dream-eye__lid--top');
+        const bottomLid = randomEye.querySelector('.dream-eye__lid--bottom');
+        if (topLid) topLid.style.transform = `scaleY(${(fatigue * 0.45).toFixed(2)})`;
+        if (bottomLid) bottomLid.style.transform = `scaleY(${(fatigue * 0.15).toFixed(2)})`;
+      }, closeDuration);
+    }, 4000);
+  }
 }
 
 /* ========================================== */

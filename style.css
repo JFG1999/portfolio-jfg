@@ -1981,6 +1981,41 @@ a {
     height: 44px;
     font-size: 1.6rem;
   }
+
+  /* ========================================== */
+  /* MOBILE PERFORMANCE & INSTANT IMAGE REVEAL  */
+  /* ========================================== */
+  /* 1. Disable SVG noise filter which causes GPU redraw lag */
+  .hero__noise {
+    display: none !important;
+  }
+
+  /* 2. Stabilize Header: eliminate font jump & reveal animations on mobile */
+  .hero__heading-line,
+  .hero__subtitle,
+  .hero__scroll-hint {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  /* 3. Calm dream eye animations in header on mobile */
+  .dream-eye,
+  .dream-eye__pupil,
+  .dream-eye__iris,
+  .dream-eye__lid {
+    animation: none !important;
+  }
+
+  /* 4. Instant image availability: no 1-2s delay pauses when scrolling */
+  .reveal-on-scroll,
+  .gallery-chapter__grid .reveal-on-scroll,
+  .gallery-chapter__grid .reveal-on-scroll:nth-child(n) {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    transition-delay: 0s !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
