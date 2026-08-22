@@ -36,11 +36,13 @@ function initPreloader() {
 function initCursor() {
   const cursor = document.getElementById('cursor');
   const trail = document.getElementById('cursor-trail');
+  const scanner = document.getElementById('cursor-scanner');
   if (!cursor || !trail) return;
 
   if (window.matchMedia('(pointer: coarse)').matches) {
     cursor.remove();
     trail.remove();
+    if (scanner) scanner.remove();
     return;
   }
 
@@ -48,6 +50,9 @@ function initCursor() {
   let mouseY = 0;
   let trailX = 0;
   let trailY = 0;
+  let scannerX = 0;
+  let scannerY = 0;
+  let isOverPhoto = false;
 
   document.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
@@ -61,17 +66,41 @@ function initCursor() {
     trailY += (mouseY - trailY) * 0.15;
     trail.style.left = `${trailX}px`;
     trail.style.top = `${trailY}px`;
+
+    // Scanner follows with slightly more lag for organic feel
+    if (scanner) {
+      scannerX += (mouseX - scannerX) * 0.2;
+      scannerY += (mouseY - scannerY) * 0.2;
+      scanner.style.left = `${scannerX}px`;
+      scanner.style.top = `${scannerY}px`;
+    }
+
     requestAnimationFrame(animateTrail);
   }
   animateTrail();
 
-  // Hover effect on interactive elements
+  // Hover effect on interactive elements + scanner on photos
   function updateHoverTargets() {
     const hoverTargets = document.querySelectorAll('a, button, .photo-window__frame');
     hoverTargets.forEach((el) => {
       el.addEventListener('mouseenter', () => cursor.classList.add('custom-cursor--hover'));
       el.addEventListener('mouseleave', () => cursor.classList.remove('custom-cursor--hover'));
     });
+
+    // Scanner visibility only on photo frames
+    if (scanner) {
+      const photoFrames = document.querySelectorAll('.photo-window__frame');
+      photoFrames.forEach((frame) => {
+        frame.addEventListener('mouseenter', () => {
+          isOverPhoto = true;
+          scanner.style.opacity = '1';
+        });
+        frame.addEventListener('mouseleave', () => {
+          isOverPhoto = false;
+          scanner.style.opacity = '0';
+        });
+      });
+    }
   }
   updateHoverTargets();
 }
@@ -328,7 +357,93 @@ function initLightbox() {
 }
 
 /* ========================================== */
-/* COMIC SCENE SCROLL TRANSITIONS             */
+/* ========================================== */
+/* DREAMCORE LIVING EYES (Progressive Fatigue)*/
+/* ========================================== */
+function initLivingEyes() {
+  const eyes = document.querySelectorAll('.dream-eye');
+  if (!eyes.length) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // Set progressive baseline fatigue based on vertical order
+  const totalEyes = eyes.length;
+  eyes.forEach((eye, index) => {
+    // 0% at hero, reaching 100% at footer
+    const baseFatigue = index / Math.max(1, totalEyes - 1);
+    eye.style.setProperty('--eye-fatigue', baseFatigue.toFixed(2));
+  });
+
+  // Dynamic Scroll Progression: overall fatigue increases as user reads deeper
+  function updateFatigueOnScroll() {
+    const scrollY = window.scrollY;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const globalProgress = maxScroll > 0 ? Math.min(1, Math.max(0, scrollY / maxScroll)) : 0;
+
+    eyes.forEach((eye, index) => {
+      const baseFatigue = index / Math.max(1, totalEyes - 1);
+      // Blend base position with current scroll progress
+      const dynamicFatigue = Math.min(1, baseFatigue * 0.7 + globalProgress * 0.35);
+      eye.style.setProperty('--eye-fatigue', dynamicFatigue.toFixed(2));
+    });
+  }
+
+  window.addEventListener('scroll', updateFatigueOnScroll, { passive: true });
+  updateFatigueOnScroll();
+
+  // Pupil gaze tracking
+  document.addEventListener('mousemove', (e) => {
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+
+    eyes.forEach((eye) => {
+      const rect = eye.getBoundingClientRect();
+      const eyeCenterX = rect.left + rect.width / 2;
+      const eyeCenterY = rect.top + rect.height / 2;
+
+      // Distance and angle
+      const dx = mouseX - eyeCenterX;
+      const dy = mouseY - eyeCenterY;
+      const dist = Math.hypot(dx, dy);
+
+      // Max pupil offset in pixels
+      const maxOffset = 6;
+      const factor = Math.min(dist / 400, 1);
+      const angle = Math.atan2(dy, dx);
+      const offsetX = Math.cos(angle) * maxOffset * factor;
+      const offsetY = Math.sin(angle) * maxOffset * factor;
+
+      const iris = eye.querySelector('.dream-eye__iris');
+      if (iris) {
+        iris.style.transform = `translate(calc(-50% + ${offsetX.toFixed(1)}px), calc(-50% + ${offsetY.toFixed(1)}px))`;
+      }
+    });
+  }, { passive: true });
+
+  // Random twitch & slower, heavier blinks for tired eyes
+  setInterval(() => {
+    const randomEye = eyes[Math.floor(Math.random() * eyes.length)];
+    if (!randomEye) return;
+
+    const fatigue = parseFloat(randomEye.style.getPropertyValue('--eye-fatigue') || '0');
+    // Tired eyes stay closed slightly longer (120ms fresh -> 240ms exhausted)
+    const closeDuration = 120 + Math.round(fatigue * 140);
+
+    const lids = randomEye.querySelectorAll('.dream-eye__lid');
+    lids.forEach(lid => {
+      lid.style.transform = 'scaleY(1)';
+    });
+
+    setTimeout(() => {
+      const topLid = randomEye.querySelector('.dream-eye__lid--top');
+      const bottomLid = randomEye.querySelector('.dream-eye__lid--bottom');
+      if (topLid) topLid.style.transform = `scaleY(${(fatigue * 0.45).toFixed(2)})`;
+      if (bottomLid) bottomLid.style.transform = `scaleY(${(fatigue * 0.15).toFixed(2)})`;
+    }, closeDuration);
+  }, 4000);
+}
+
+/* ========================================== */
+/* DREAMCORE SCENE SCROLL TRANSITIONS         */
 /* ========================================== */
 function initSceneTransitions() {
   const sections = document.querySelectorAll('.gallery-chapter, .hero, .manifesto, .interlude, footer');
@@ -348,10 +463,24 @@ function initSceneTransitions() {
       const layer = layers[0];
       const rect = section.getBoundingClientRect();
       const centerY = rect.top + rect.height / 2;
-      const proximity = Math.abs(centerY - vh / 2) / (vh / 2);
+      const isHero = section.classList.contains('hero');
       
-      // Fade in as the section approaches the center of the screen
-      const opacity = 0.02 + (1 - Math.min(proximity, 1)) * 0.15;
+      // Calculate viewport overlap
+      const visibleTop = Math.max(0, rect.top);
+      const visibleBottom = Math.min(vh, rect.bottom);
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+      const visibilityRatio = Math.min(1, Math.max(0, visibleHeight / Math.min(vh, Math.max(200, rect.height))));
+
+      // Normalized distance from center
+      const rawProximity = Math.abs(centerY - vh / 2) / (vh * 0.75);
+      const factor = Math.max(0, 1 - rawProximity);
+      const smoothed = factor * factor * (3 - 2 * factor);
+
+      const baseMax = isHero ? 0.72 : 0.65;
+      const opacity = isHero 
+        ? Math.max(0.50, Math.min(baseMax, smoothed * baseMax))
+        : Math.max(0.35, Math.min(baseMax, smoothed * baseMax * (visibilityRatio > 0.05 ? 1 : 0.8)));
+      
       layer.style.opacity = opacity.toFixed(3);
     });
 
@@ -369,6 +498,27 @@ function initSceneTransitions() {
 }
 
 /* ========================================== */
+/* RETRO WINDOWS DISMISS (Option D Shatter)   */
+/* ========================================== */
+function initRetroWindows() {
+  const dismissButtons = document.querySelectorAll('.retro-window__btn--close, .retro-window__btn--dismiss');
+  if (!dismissButtons.length) return;
+
+  dismissButtons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const windowEl = btn.closest('.retro-window');
+      if (!windowEl || windowEl.classList.contains('retro-window--shattering')) return;
+
+      windowEl.classList.add('retro-window--shattering');
+      setTimeout(() => {
+        windowEl.style.display = 'none';
+      }, 620);
+    });
+  });
+}
+
+/* ========================================== */
 /* INITIALIZE EVERYTHING                      */
 /* ========================================== */
 initPreloader();
@@ -377,4 +527,8 @@ initParallax();
 initScrollReveal();
 initTilt();
 initLightbox();
+initLivingEyes();
 initSceneTransitions();
+initRetroWindows();
+
+
