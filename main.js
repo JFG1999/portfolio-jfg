@@ -112,6 +112,8 @@ function initParallax() {
   const layers = document.querySelectorAll('.parallax-layer');
   if (!layers.length) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // Disable JS scroll parallax on mobile/touch screens to ensure 60/120fps native GPU scrolling
+  if (window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768) return;
 
   let ticking = false;
 
@@ -374,6 +376,7 @@ function initLivingEyes() {
   });
 
   // Dynamic Scroll Progression: overall fatigue increases as user reads deeper
+  let fatigueTicking = false;
   function updateFatigueOnScroll() {
     const scrollY = window.scrollY;
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
@@ -385,39 +388,47 @@ function initLivingEyes() {
       const dynamicFatigue = Math.min(1, baseFatigue * 0.7 + globalProgress * 0.35);
       eye.style.setProperty('--eye-fatigue', dynamicFatigue.toFixed(2));
     });
+    fatigueTicking = false;
   }
 
-  window.addEventListener('scroll', updateFatigueOnScroll, { passive: true });
+  window.addEventListener('scroll', () => {
+    if (!fatigueTicking) {
+      requestAnimationFrame(updateFatigueOnScroll);
+      fatigueTicking = true;
+    }
+  }, { passive: true });
   updateFatigueOnScroll();
 
-  // Pupil gaze tracking
-  document.addEventListener('mousemove', (e) => {
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
+  // Pupil gaze tracking (Desktop only - skip on touchscreens)
+  if (!window.matchMedia('(pointer: coarse)').matches && window.innerWidth > 768) {
+    document.addEventListener('mousemove', (e) => {
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
 
-    eyes.forEach((eye) => {
-      const rect = eye.getBoundingClientRect();
-      const eyeCenterX = rect.left + rect.width / 2;
-      const eyeCenterY = rect.top + rect.height / 2;
+      eyes.forEach((eye) => {
+        const rect = eye.getBoundingClientRect();
+        const eyeCenterX = rect.left + rect.width / 2;
+        const eyeCenterY = rect.top + rect.height / 2;
 
-      // Distance and angle
-      const dx = mouseX - eyeCenterX;
-      const dy = mouseY - eyeCenterY;
-      const dist = Math.hypot(dx, dy);
+        // Distance and angle
+        const dx = mouseX - eyeCenterX;
+        const dy = mouseY - eyeCenterY;
+        const dist = Math.hypot(dx, dy);
 
-      // Max pupil offset in pixels
-      const maxOffset = 6;
-      const factor = Math.min(dist / 400, 1);
-      const angle = Math.atan2(dy, dx);
-      const offsetX = Math.cos(angle) * maxOffset * factor;
-      const offsetY = Math.sin(angle) * maxOffset * factor;
+        // Max pupil offset in pixels
+        const maxOffset = 6;
+        const factor = Math.min(dist / 400, 1);
+        const angle = Math.atan2(dy, dx);
+        const offsetX = Math.cos(angle) * maxOffset * factor;
+        const offsetY = Math.sin(angle) * maxOffset * factor;
 
-      const iris = eye.querySelector('.dream-eye__iris');
-      if (iris) {
-        iris.style.transform = `translate(calc(-50% + ${offsetX.toFixed(1)}px), calc(-50% + ${offsetY.toFixed(1)}px))`;
-      }
-    });
-  }, { passive: true });
+        const iris = eye.querySelector('.dream-eye__iris');
+        if (iris) {
+          iris.style.transform = `translate(calc(-50% + ${offsetX.toFixed(1)}px), calc(-50% + ${offsetY.toFixed(1)}px))`;
+        }
+      });
+    }, { passive: true });
+  }
 
   // Random twitch & slower, heavier blinks for tired eyes
   setInterval(() => {
@@ -449,6 +460,17 @@ function initSceneTransitions() {
   const sections = document.querySelectorAll('.gallery-chapter, .hero, .manifesto, .interlude, footer');
   if (!sections.length) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // On mobile touch devices, use a fixed clean ambient opacity to prevent scroll framedrops
+  if (window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768) {
+    sections.forEach((section) => {
+      const layers = section.querySelectorAll('.scene-layer');
+      layers.forEach((layer) => {
+        layer.style.opacity = '0.55';
+      });
+    });
+    return;
+  }
 
   let ticking = false;
 
