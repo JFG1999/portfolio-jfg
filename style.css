@@ -282,8 +282,23 @@ a {
   transform: scaleY(var(--blink-depth, 0.05));
 }
 
-.dream-eye--shut .dream-eye__ball {
+.dream-eye--shut .dream-eye__ball,
+.dream-eye:not(.is-awake) .dream-eye__ball {
   transform: scaleY(0.04);
+}
+
+/* Ripping open: the hole bursts out of the page when the eye scrolls into view */
+.dream-eye__tear {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform 0.55s cubic-bezier(0.2, 1.6, 0.35, 1),
+    opacity 0.15s ease;
+}
+
+.dream-eye:not(.is-torn) .dream-eye__tear {
+  transform: scale(0.08, 0.25) rotate(-12deg);
+  opacity: 0;
 }
 
 .dream-eye__lidline {
@@ -292,7 +307,8 @@ a {
 }
 
 .dream-eye.is-blinking .dream-eye__lidline,
-.dream-eye--shut .dream-eye__lidline {
+.dream-eye--shut .dream-eye__lidline,
+.dream-eye:not(.is-awake) .dream-eye__lidline {
   opacity: 1;
 }
 

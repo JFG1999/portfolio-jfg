@@ -453,7 +453,7 @@ function initLightbox() {
 /* ========================================== */
 /* DREAMCORE LIVING EYES (engraved, fatigue)  */
 /* ========================================== */
-// Each eye is drawn as an old engraving on a torn paper scrap.
+// Each eye is drawn as an old engraving that rips through the page.
 // Fatigue grows from the hero (0 = awake) to the footer (1 = overwhelmed),
 // with a short recovery in the quiet interludes.
 
@@ -480,17 +480,61 @@ function drawEye(f, seed) {
   const lower = `C ${cx + half * 0.5} ${cy + loH * 1.2} ${cx - half * 0.5} ${cy + loH * 1.2} ${L} ${cy + tilt}`;
   const outline = `${upper} ${lower} Z`;
 
-  // torn paper scrap behind the eye, yellowing with fatigue
-  let paper = '';
-  for (let k = 0; k < 36; k++) {
-    const a = (k / 36) * Math.PI * 2;
-    const rad = 1 + (r() - 0.5) * 0.1;
-    paper += `${k ? 'L' : 'M'} ${(cx + Math.cos(a) * (half + 22) * rad).toFixed(1)} ${(cy + 6 + Math.sin(a) * 62 * rad).toFixed(1)} `;
+  // Ripped hole in the page: the more tired the eye, the more violent the tear
+  const amp = 0.12 + f * 0.14;
+  const phase = r() * 6;
+  const pts = [];
+  for (let k = 0; k < 56; k++) {
+    const a = (k / 56) * Math.PI * 2;
+    let rad = 1 + (r() - 0.5) * amp + Math.sin(a * 3 + phase) * 0.06;
+    if (r() < 0.12) rad += (r() < 0.5 ? -1 : 1) * (0.08 + f * 0.1);   // sharp spikes
+    pts.push([Math.cos(a) * (half + 24) * rad, Math.sin(a) * 64 * rad]);
   }
+  const ring = (scale) => pts.map(([x, y], k) => `${k ? 'L' : 'M'} ${(cx + x * scale).toFixed(1)} ${(cy + 6 + y * scale).toFixed(1)}`).join(' ') + ' Z';
+  const hole = ring(1);
   const paperColor = `rgb(${Math.round(mix(236, 222, f))},${Math.round(mix(229, 206, f))},${Math.round(mix(214, 178, f))})`;
+  const flapColor = `rgb(${Math.round(mix(205, 180, f))},${Math.round(mix(194, 162, f))},${Math.round(mix(172, 132, f))})`;
   const sclera = `rgb(${Math.round(mix(248, 238, f))},${Math.round(mix(244, 194, f))},${Math.round(mix(236, 184, f))})`;
 
-  let back = `<path d="${paper}Z" fill="${paperColor}"/>`;
+  // white torn fibres around the hole
+  let tear = `<path d="${ring(1.08)}" fill="#f7f2e8" filter="url(#${id}t)"/>`;
+  // small rips running outwards
+  for (let i = 0; i < 2 + Math.round(f * 2); i++) {
+    const [px, py] = pts[Math.floor(r() * pts.length)];
+    const ang = Math.atan2(py, px);
+    let x = cx + px * 1.06, y = cy + 6 + py * 1.06;
+    let d = `M ${x.toFixed(1)} ${y.toFixed(1)}`;
+    for (let k = 0; k < 3; k++) {
+      x += Math.cos(ang + (r() - 0.5) * 0.9) * (5 + r() * 6 + f * 4);
+      y += Math.sin(ang + (r() - 0.5) * 0.9) * (5 + r() * 6 + f * 4);
+      d += ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+    }
+    tear += `<path d="${d}" fill="none" stroke="#f7f2e8" stroke-width="1.6" stroke-linecap="round"/>`;
+  }
+
+  // flaps of the page, peeled outwards (showing their back side)
+  let flaps = '';
+  for (let i = 0; i < 2 + Math.round(f * 3); i++) {
+    const j = Math.floor(r() * pts.length);
+    const [ax, ay] = pts[j];
+    const [bx, by] = pts[(j + 4 + Math.floor(r() * 4)) % pts.length];
+    const mx = (ax + bx) / 2, my = (ay + by) / 2;
+    const out = 1.12 + r() * 0.16 + f * 0.12;
+    const skew = (r() - 0.5) * 14;
+    const tip = [cx + mx * out + skew, cy + 6 + my * out];
+    const A = [cx + ax * 1.04, cy + 6 + ay * 1.04], B = [cx + bx * 1.04, cy + 6 + by * 1.04];
+    // curled edges: bulge each side slightly so the flap looks bent, not cut
+    const bend = (P, Q, k) => [((P[0] + Q[0]) / 2 + (Q[1] - P[1]) * k).toFixed(1), ((P[1] + Q[1]) / 2 - (Q[0] - P[0]) * k).toFixed(1)];
+    const c1 = bend(A, tip, 0.18), c2 = bend(tip, B, 0.18);
+    const tri = `M ${A[0].toFixed(1)} ${A[1].toFixed(1)} Q ${c1[0]} ${c1[1]} ${tip[0].toFixed(1)} ${tip[1].toFixed(1)} Q ${c2[0]} ${c2[1]} ${B[0].toFixed(1)} ${B[1].toFixed(1)} Z`;
+    flaps += `<path d="${tri}" fill="#000" fill-opacity="0.35" transform="translate(3 4)"/>`;
+    flaps += `<path d="${tri}" fill="url(#${id}f)" stroke="${ink}" stroke-opacity="0.45" stroke-width="0.7"/>`;
+    flaps += `<path d="M ${A[0].toFixed(1)} ${A[1].toFixed(1)} L ${B[0].toFixed(1)} ${B[1].toFixed(1)}" stroke="#f7f2e8" stroke-width="1.4"/>`;
+  }
+
+  // the layer behind the page, with a shadow cast by the torn edge
+  let back = `<path d="${hole}" fill="${paperColor}"/>`;
+  back += `<path d="${hole}" fill="none" stroke="#000" stroke-opacity="${(0.35 + f * 0.2).toFixed(2)}" stroke-width="16" clip-path="url(#${id}h)" filter="url(#${id}b)"/>`;
   // dark circles: hatching + arcs under the eye
   if (f > 0.25) {
     for (let x = L + 30; x < R - 30; x += 5) {
@@ -565,11 +609,19 @@ function drawEye(f, seed) {
   return `<svg viewBox="0 0 240 150" aria-hidden="true">
     <defs>
       <clipPath id="${id}c"><path d="${outline}"/></clipPath>
+      <clipPath id="${id}h"><path d="${hole}"/></clipPath>
       <filter id="${id}w"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="${seed % 100}"/><feDisplacementMap in="SourceGraphic" scale="1.8"/></filter>
+      <filter id="${id}t" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.18" numOctaves="2" seed="${seed % 100}"/><feDisplacementMap in="SourceGraphic" scale="${(4 + f * 3).toFixed(1)}"/></filter>
+      <filter id="${id}b"><feGaussianBlur stdDeviation="4"/></filter>
+      <linearGradient id="${id}f" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${flapColor}"/><stop offset="1" stop-color="#8f8370"/></linearGradient>
     </defs>
-    <g filter="url(#${id}w)">${back}</g>
-    <g class="dream-eye__ball" clip-path="url(#${id}c)">${ball}</g>
-    <g filter="url(#${id}w)">${front}</g>
+    <g class="dream-eye__tear">
+      ${tear}
+      <g filter="url(#${id}w)">${back}</g>
+      <g class="dream-eye__ball" clip-path="url(#${id}c)">${ball}</g>
+      <g filter="url(#${id}w)">${front}</g>
+      ${flaps}
+    </g>
   </svg>`;
 }
 
@@ -589,7 +641,23 @@ function initLivingEyes() {
     eye.innerHTML = drawEye(fatigue, i * 97 + 13);
   });
 
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    eyes.forEach((eye) => eye.classList.add('is-torn', 'is-awake'));
+    return;
+  }
+
+  // The page rips open when an eye scrolls into view, then the eye opens
+  const tearObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const eye = entry.target;
+      tearObserver.unobserve(eye);
+      eye.classList.add('is-torn');
+      setTimeout(() => eye.classList.add('is-awake'), 550);
+    });
+  }, { threshold: 0.6 });
+  // wait for the preloader, so the first eyes tear open in view
+  setTimeout(() => eyes.forEach((eye) => tearObserver.observe(eye)), 1300);
 
   // Pupil gaze tracking (Desktop only - skip on touchscreens)
   if (!window.matchMedia('(pointer: coarse)').matches && window.innerWidth > 768) {
@@ -639,7 +707,7 @@ function initLivingEyes() {
     const schedule = () => {
       const wait = hectic ? 500 + Math.random() * 2200 : 2500 + Math.random() * 5500;
       setTimeout(() => {
-        if (visible.has(eye) && !eye.classList.contains('dream-eye--shut')) blink(eye, fatigue);
+        if (visible.has(eye) && eye.classList.contains('is-awake') && !eye.classList.contains('dream-eye--shut')) blink(eye, fatigue);
         schedule();
       }, wait);
     };
