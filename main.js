@@ -451,100 +451,200 @@ function initLightbox() {
 }
 
 /* ========================================== */
+/* DREAMCORE LIVING EYES (engraved, fatigue)  */
 /* ========================================== */
-/* DREAMCORE LIVING EYES (Progressive Fatigue)*/
-/* ========================================== */
-function initLivingEyes() {
-  const eyes = document.querySelectorAll('.dream-eye');
-  if (!eyes.length) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+// Each eye is drawn as an old engraving on a torn paper scrap.
+// Fatigue grows from the hero (0 = awake) to the footer (1 = overwhelmed),
+// with a short recovery in the quiet interludes.
 
-  // Set progressive baseline fatigue based on vertical order
-  const totalEyes = eyes.length;
-  eyes.forEach((eye, index) => {
-    // 0% at hero, reaching 100% at footer
-    const baseFatigue = index / Math.max(1, totalEyes - 1);
-    eye.style.setProperty('--eye-fatigue', baseFatigue.toFixed(2));
-  });
+function seededRandom(seed) {
+  let s = seed >>> 0;
+  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+}
 
-  // Dynamic Scroll Progression: overall fatigue increases as user reads deeper
-  let fatigueTicking = false;
-  function updateFatigueOnScroll() {
-    const scrollY = window.scrollY;
-    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    const globalProgress = maxScroll > 0 ? Math.min(1, Math.max(0, scrollY / maxScroll)) : 0;
+const mix = (a, b, t) => a + (b - a) * t;
 
-    eyes.forEach((eye, index) => {
-      const baseFatigue = index / Math.max(1, totalEyes - 1);
-      // Blend base position with current scroll progress
-      const dynamicFatigue = Math.min(1, baseFatigue * 0.7 + globalProgress * 0.35);
-      eye.style.setProperty('--eye-fatigue', dynamicFatigue.toFixed(2));
-    });
-    fatigueTicking = false;
+function drawEye(f, seed) {
+  const r = seededRandom(seed);
+  const ink = '#1d1a16';
+  const id = `eye${seed}`;
+  const cx = 120, cy = 76;
+  const shapes = [88, 80, 94];                       // almond, round, narrow
+  const half = shapes[Math.floor(r() * 3)];
+  const open = mix(1, 0.3, Math.pow(f, 0.9));        // lids droop with fatigue
+  const upH = (half === 80 ? 60 : half === 94 ? 46 : 54) * open;
+  const loH = (half === 80 ? 38 : 30) * mix(1, 0.9, f);
+  const L = cx - half, R = cx + half;
+  const tilt = (r() - 0.5) * 8;
+  const upper = `M ${L} ${cy + tilt} C ${cx - half * 0.55} ${cy - upH * 1.25} ${cx + half * 0.55} ${cy - upH * 1.25} ${R} ${cy - tilt}`;
+  const lower = `C ${cx + half * 0.5} ${cy + loH * 1.2} ${cx - half * 0.5} ${cy + loH * 1.2} ${L} ${cy + tilt}`;
+  const outline = `${upper} ${lower} Z`;
+
+  // torn paper scrap behind the eye, yellowing with fatigue
+  let paper = '';
+  for (let k = 0; k < 36; k++) {
+    const a = (k / 36) * Math.PI * 2;
+    const rad = 1 + (r() - 0.5) * 0.1;
+    paper += `${k ? 'L' : 'M'} ${(cx + Math.cos(a) * (half + 22) * rad).toFixed(1)} ${(cy + 6 + Math.sin(a) * 62 * rad).toFixed(1)} `;
+  }
+  const paperColor = `rgb(${Math.round(mix(236, 222, f))},${Math.round(mix(229, 206, f))},${Math.round(mix(214, 178, f))})`;
+  const sclera = `rgb(${Math.round(mix(248, 238, f))},${Math.round(mix(244, 194, f))},${Math.round(mix(236, 184, f))})`;
+
+  let back = `<path d="${paper}Z" fill="${paperColor}"/>`;
+  // dark circles: hatching + arcs under the eye
+  if (f > 0.25) {
+    for (let x = L + 30; x < R - 30; x += 5) {
+      const y0 = cy + loH + 4;
+      const len = 6 + f * 12 * Math.sin(Math.PI * (x - L) / (2 * half));
+      back += `<line x1="${x}" y1="${y0}" x2="${x - 4}" y2="${(y0 + len).toFixed(1)}" stroke="${ink}" stroke-opacity="${(0.35 * f).toFixed(2)}" stroke-width="0.8"/>`;
+    }
+  }
+  for (let i = 1; i <= Math.round(f * 3.2); i++) {
+    const y = cy + loH * 1.05 + i * 9;
+    back += `<path d="M ${L + 20 + i * 6} ${y - 6} Q ${cx} ${y + 12} ${R - 20 - i * 6} ${y - 6}" fill="none" stroke="${ink}" stroke-opacity="${(0.25 + f * 0.35).toFixed(2)}" stroke-width="1.1"/>`;
+  }
+  // lid creases and engraved shading above the eye
+  for (let i = 0; i < 1 + Math.round(f * 2); i++) {
+    const off = 14 + i * 8 + (1 - open) * 6;
+    back += `<path d="M ${L + 10 + i * 8} ${cy - 4 - i * 2} C ${cx - half * 0.5} ${cy - upH * 1.25 - off} ${cx + half * 0.5} ${cy - upH * 1.25 - off} ${R - 10 - i * 8} ${cy - 4 - i * 2}" fill="none" stroke="${ink}" stroke-width="${i ? 1 : 1.6}" stroke-opacity="${i ? 0.45 : 0.8}"/>`;
+  }
+  for (let k = 0; k < 14; k++) {
+    const x = L + 25 + (k / 13) * (2 * half - 50);
+    back += `<line x1="${x.toFixed(1)}" y1="${(cy - upH * 1.05 - 18).toFixed(1)}" x2="${(x + 6).toFixed(1)}" y2="${(cy - upH * 0.95 - 4).toFixed(1)}" stroke="${ink}" stroke-width="0.7" stroke-opacity="${(0.35 + f * 0.4).toFixed(2)}"/>`;
   }
 
-  window.addEventListener('scroll', () => {
-    if (!fatigueTicking) {
-      requestAnimationFrame(updateFatigueOnScroll);
-      fatigueTicking = true;
+  // the eyeball (clipped to the eye shape)
+  let ball = `<path d="${outline}" fill="${sclera}"/>`;
+  for (let v = 0; v < Math.round(f * 16); v++) {
+    const fromLeft = v % 2 === 0;
+    let x = fromLeft ? L + 2 : R - 2;
+    let y = cy + (r() - 0.5) * 30;
+    let d = `M ${x} ${y.toFixed(1)}`;
+    const steps = 3 + Math.floor(r() * 3);
+    for (let k = 0; k < steps; k++) {
+      x += (fromLeft ? 1 : -1) * (8 + r() * 12);
+      y += (r() - 0.5) * 12;
+      d += ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
     }
-  }, { passive: true });
-  updateFatigueOnScroll();
+    ball += `<path d="${d}" fill="none" stroke="#a3201c" stroke-width="${(0.5 + f * 0.9).toFixed(2)}" stroke-opacity="${(0.5 + f * 0.4).toFixed(2)}" stroke-linecap="round"/>`;
+  }
+  const irisR = half === 94 ? 30 : 34;
+  const pupilR = mix(10, 15, f);                     // overstimulated: pupils widen
+  const iy = cy + (1 - open) * 6;
+  let iris = `<circle cx="${cx}" cy="${iy}" r="${irisR}" fill="#efe8da" stroke="${ink}" stroke-width="2"/>`;
+  const rays = 34 + Math.floor(r() * 30);
+  for (let k = 0; k < rays; k++) {
+    const a = (k / rays) * Math.PI * 2 + r() * 0.1;
+    const r1 = pupilR + 2 + r() * 3, r2 = irisR - 1 - r() * 6;
+    iris += `<line x1="${(cx + Math.cos(a) * r1).toFixed(1)}" y1="${(iy + Math.sin(a) * r1).toFixed(1)}" x2="${(cx + Math.cos(a) * r2).toFixed(1)}" y2="${(iy + Math.sin(a) * r2).toFixed(1)}" stroke="${ink}" stroke-width="0.9" stroke-opacity="0.75"/>`;
+  }
+  iris += `<circle cx="${cx}" cy="${iy}" r="${irisR - 5}" fill="none" stroke="${ink}" stroke-width="0.6" stroke-dasharray="2 2"/>`;
+  iris += `<circle cx="${cx}" cy="${iy}" r="${pupilR.toFixed(1)}" fill="${ink}"/>`;
+  iris += `<ellipse cx="${(cx - irisR * 0.35).toFixed(1)}" cy="${(iy - irisR * 0.4).toFixed(1)}" rx="${(6 - f * 3).toFixed(1)}" ry="${(4 - f * 2).toFixed(1)}" fill="#fff" opacity="${(1 - f * 0.7).toFixed(2)}"/>`;
+  ball += `<g class="dream-eye__iris">${iris}</g>`;
+  ball += `<path d="${upper}" fill="none" stroke="${ink}" stroke-opacity="0.18" stroke-width="${(8 + f * 10).toFixed(1)}" transform="translate(0 4)"/>`;
+
+  // outline, lashes (droop with fatigue), closed-lid line for blinks, tear
+  let front = `<path d="${upper}" fill="none" stroke="${ink}" stroke-width="${(3.2 + f).toFixed(1)}" stroke-linecap="round"/>`;
+  front += `<path d="M ${R} ${cy - tilt} ${lower}" fill="none" stroke="${ink}" stroke-width="1.6" stroke-linecap="round" stroke-opacity="0.85"/>`;
+  const lashes = 9 + Math.floor(r() * 7);
+  for (let k = 1; k < lashes; k++) {
+    const t = k / lashes, u = 1 - t;
+    const x0 = u * u * u * L + 3 * u * u * t * (cx - half * 0.55) + 3 * u * t * t * (cx + half * 0.55) + t * t * t * R;
+    const y0 = u * u * u * (cy + tilt) + 3 * u * u * t * (cy - upH * 1.25) + 3 * u * t * t * (cy - upH * 1.25) + t * t * t * (cy - tilt);
+    const ang = -Math.PI / 2 + (t - 0.5) * 1.6 + f * 0.54 * (t < 0.5 ? -1 : 1);
+    const len = 9 + r() * 7 - f * 3;
+    const x1 = x0 + Math.cos(ang) * len, y1 = y0 + Math.sin(ang) * len + f * 6;
+    front += `<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} Q ${((x0 + x1) / 2 + (t - 0.5) * 6).toFixed(1)} ${((y0 + y1) / 2 - 3).toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="${ink}" stroke-width="1.1" stroke-linecap="round"/>`;
+  }
+  front += `<path class="dream-eye__lidline" d="M ${L + 4} ${cy + tilt} Q ${cx} ${cy + 14} ${R - 4} ${cy - tilt}" fill="none" stroke="${ink}" stroke-width="2.4" stroke-linecap="round"/>`;
+  if (f > 0.85) {
+    front += `<path d="M ${L + 8} ${cy + tilt + 3} q -3 10 0 16 q 3 -6 0 -16" fill="#9ec3d6" fill-opacity="0.7" stroke="${ink}" stroke-width="0.8"/>`;
+  }
+
+  return `<svg viewBox="0 0 240 150" aria-hidden="true">
+    <defs>
+      <clipPath id="${id}c"><path d="${outline}"/></clipPath>
+      <filter id="${id}w"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="${seed % 100}"/><feDisplacementMap in="SourceGraphic" scale="1.8"/></filter>
+    </defs>
+    <g filter="url(#${id}w)">${back}</g>
+    <g class="dream-eye__ball" clip-path="url(#${id}c)">${ball}</g>
+    <g filter="url(#${id}w)">${front}</g>
+  </svg>`;
+}
+
+function initLivingEyes() {
+  const eyes = Array.from(document.querySelectorAll('.dream-eye'));
+  if (!eyes.length) return;
+
+  // Fatigue from the eye's position on the page; interludes are a short rest
+  const sections = Array.from(document.querySelectorAll('section, footer'));
+  eyes.forEach((eye, i) => {
+    const section = eye.closest('section, footer');
+    const progress = sections.indexOf(section) / Math.max(1, sections.length - 1);
+    let fatigue = Math.pow(progress, 0.85);
+    if (section.classList.contains('interlude')) fatigue *= 0.5;
+    fatigue = Math.min(1, Math.max(0, fatigue + (Math.sin(i * 12.9898) * 0.04)));
+    eye.dataset.fatigue = fatigue.toFixed(2);
+    eye.innerHTML = drawEye(fatigue, i * 97 + 13);
+  });
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   // Pupil gaze tracking (Desktop only - skip on touchscreens)
   if (!window.matchMedia('(pointer: coarse)').matches && window.innerWidth > 768) {
     document.addEventListener('mousemove', (e) => {
-      const mouseX = e.clientX;
-      const mouseY = e.clientY;
-
       eyes.forEach((eye) => {
         const rect = eye.getBoundingClientRect();
-        const eyeCenterX = rect.left + rect.width / 2;
-        const eyeCenterY = rect.top + rect.height / 2;
-
-        // Distance and angle
-        const dx = mouseX - eyeCenterX;
-        const dy = mouseY - eyeCenterY;
-        const dist = Math.hypot(dx, dy);
-
-        // Max pupil offset in pixels
-        const maxOffset = 6;
-        const factor = Math.min(dist / 400, 1);
+        const dx = e.clientX - (rect.left + rect.width / 2);
+        const dy = e.clientY - (rect.top + rect.height / 2);
+        const factor = Math.min(Math.hypot(dx, dy) / 400, 1);
         const angle = Math.atan2(dy, dx);
-        const offsetX = Math.cos(angle) * maxOffset * factor;
-        const offsetY = Math.sin(angle) * maxOffset * factor;
-
+        const maxOffset = 14; // in drawing units
         const iris = eye.querySelector('.dream-eye__iris');
         if (iris) {
-          iris.style.transform = `translate(calc(-50% + ${offsetX.toFixed(1)}px), calc(-50% + ${offsetY.toFixed(1)}px))`;
+          iris.style.transform = `translate(${(Math.cos(angle) * maxOffset * factor).toFixed(1)}px, ${(Math.sin(angle) * maxOffset * 0.6 * factor).toFixed(1)}px)`;
         }
       });
     }, { passive: true });
   }
 
-  // Random twitch & slower, heavier blinks for tired eyes (Desktop only)
-  if (!window.matchMedia('(pointer: coarse)').matches && window.innerWidth > 768) {
-    setInterval(() => {
-      const randomEye = eyes[Math.floor(Math.random() * eyes.length)];
-      if (!randomEye) return;
+  // Blinking: calm when awake, slow and heavy when tired,
+  // hectic and irregular (with half-closed flutters) when overwhelmed
+  const visible = new Set();
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => (entry.isIntersecting ? visible.add(entry.target) : visible.delete(entry.target)));
+  });
+  eyes.forEach((eye) => observer.observe(eye));
 
-      const fatigue = parseFloat(randomEye.style.getPropertyValue('--eye-fatigue') || '0');
-      // Tired eyes stay closed slightly longer (120ms fresh -> 240ms exhausted)
-      const closeDuration = 120 + Math.round(fatigue * 140);
-
-      const lids = randomEye.querySelectorAll('.dream-eye__lid');
-      lids.forEach(lid => {
-        lid.style.transform = 'scaleY(1)';
-      });
-
+  function blink(eye, fatigue) {
+    const hectic = fatigue > 0.78;
+    const count = hectic ? 1 + Math.floor(Math.random() * 4) : 1;
+    let done = 0;
+    const once = () => {
+      eye.style.setProperty('--blink-depth', hectic && Math.random() < 0.4 ? '0.4' : '0.05');
+      eye.classList.add('is-blinking');
+      const hold = hectic ? 60 + Math.random() * 90 : 110 + fatigue * 260;
       setTimeout(() => {
-        const topLid = randomEye.querySelector('.dream-eye__lid--top');
-        const bottomLid = randomEye.querySelector('.dream-eye__lid--bottom');
-        if (topLid) topLid.style.transform = `scaleY(${(fatigue * 0.45).toFixed(2)})`;
-        if (bottomLid) bottomLid.style.transform = `scaleY(${(fatigue * 0.15).toFixed(2)})`;
-      }, closeDuration);
-    }, 4000);
+        eye.classList.remove('is-blinking');
+        if (++done < count) setTimeout(once, 60 + Math.random() * 140);
+      }, hold);
+    };
+    once();
   }
+
+  eyes.forEach((eye) => {
+    const fatigue = parseFloat(eye.dataset.fatigue);
+    const hectic = fatigue > 0.78;
+    const schedule = () => {
+      const wait = hectic ? 500 + Math.random() * 2200 : 2500 + Math.random() * 5500;
+      setTimeout(() => {
+        if (visible.has(eye) && !eye.classList.contains('dream-eye--shut')) blink(eye, fatigue);
+        schedule();
+      }, wait);
+    };
+    schedule();
+  });
 }
 
 /* ========================================== */

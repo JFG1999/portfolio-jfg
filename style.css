@@ -255,112 +255,49 @@ a {
   position: absolute;
   width: clamp(65px, 8vw, 115px);
   height: clamp(36px, 4.8vw, 68px);
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-  background: radial-gradient(
-    ellipse at 50% 50%,
-    color-mix(in srgb, #f4efe6, #fca5a5 calc(var(--eye-fatigue, 0) * 35%)) 25%,
-    color-mix(in srgb, #dfd7c9, #e28f8f calc(var(--eye-fatigue, 0) * 30%)) 65%,
-    #8c8275 100%
-  );
-  overflow: hidden;
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.8),
-    inset 0 0 12px rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(237, 231, 220, 0.35);
   pointer-events: none;
   z-index: var(--z-eyes);
   opacity: 0.85;
   animation: eye-float 7s ease-in-out infinite alternate;
-  --eye-fatigue: 0;
 }
 
-.dream-eye__sclera {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-/* Bloodshot vascular network */
-.dream-eye__veins {
+/* Engraved eyes are drawn as SVG by main.js (initLivingEyes) */
+.dream-eye svg {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 2;
-  opacity: calc(var(--eye-fatigue, 0) * 0.95);
-  transition: opacity 0.4s ease;
+  left: -35%;
+  top: -60%;
+  width: 170%;
+  height: 213%;
+  overflow: visible;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.7));
 }
 
-.dream-eye__vein {
-  stroke: rgba(185, 28, 28, 0.85);
-  fill: none;
-  stroke-width: 1.2px;
-  stroke-linecap: round;
+.dream-eye__ball {
+  transform-box: fill-box;
+  transform-origin: 50% 45%;
+  transition: transform 0.09s ease-in;
+}
+
+.dream-eye.is-blinking .dream-eye__ball {
+  transform: scaleY(var(--blink-depth, 0.05));
+}
+
+.dream-eye--shut .dream-eye__ball {
+  transform: scaleY(0.04);
+}
+
+.dream-eye__lidline {
+  opacity: 0;
+  transition: opacity 0.06s;
+}
+
+.dream-eye.is-blinking .dream-eye__lidline,
+.dream-eye--shut .dream-eye__lidline {
+  opacity: 1;
 }
 
 .dream-eye__iris {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 48%;
-  height: 80%;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, #8c8275 0%, #5a544b 45%, #2a2824 85%, #08090d 100%);
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8);
   transition: transform 0.25s ease-out;
-  z-index: 3;
-}
-
-.dream-eye__pupil {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 45%;
-  height: 45%;
-  border-radius: 50%;
-  background: #050608;
-  transform: translate(-50%, -50%);
-  animation: pupil-dilate 5s ease-in-out infinite;
-}
-
-.dream-eye__glint {
-  position: absolute;
-  top: 25%;
-  left: 30%;
-  width: 22%;
-  height: 22%;
-  border-radius: 50%;
-  background: #ffffff;
-  opacity: 0.75;
-}
-
-/* Eyelids with droop based on fatigue */
-.dream-eye__lid {
-  position: absolute;
-  left: 0;
-  right: 0;
-  background: var(--dream-void);
-  z-index: 5;
-}
-
-.dream-eye__lid--top {
-  top: 0;
-  height: 52%;
-  transform-origin: top;
-  transform: scaleY(calc(var(--eye-fatigue, 0) * 0.45));
-  border-bottom: 1px solid rgba(237, 231, 220, 0.3);
-  animation: eye-blink-top 6.5s ease-in-out infinite;
-}
-
-.dream-eye__lid--bottom {
-  bottom: 0;
-  height: 52%;
-  transform-origin: bottom;
-  transform: scaleY(calc(var(--eye-fatigue, 0) * 0.15));
-  border-top: 1px solid rgba(237, 231, 220, 0.3);
-  animation: eye-blink-bottom 6.5s ease-in-out infinite;
 }
 
 /* Specific Eye Placement & Offsets across Sections */
@@ -372,11 +309,6 @@ a {
   height: clamp(48px, 5.2vw, 68px);
   transform: rotate(-8deg);
 }
-.dream-eye--hero-1 .dream-eye__lid--top,
-.dream-eye--hero-1 .dream-eye__lid--bottom {
-  animation-delay: 1.2s;
-}
-
 .dream-eye--hero-2 {
   bottom: 22%;
   left: 8%;
@@ -385,12 +317,6 @@ a {
   transform: rotate(6deg);
   opacity: 0.7;
 }
-.dream-eye--hero-2 .dream-eye__lid--top,
-.dream-eye--hero-2 .dream-eye__lid--bottom {
-  animation-delay: 3.6s;
-  animation-duration: 5.2s;
-}
-
 .dream-eye--hero-3 {
   bottom: 12%;
   right: 36%;
@@ -399,12 +325,6 @@ a {
   transform: rotate(-4deg);
   opacity: 0.8;
 }
-.dream-eye--hero-3 .dream-eye__lid--top,
-.dream-eye--hero-3 .dream-eye__lid--bottom {
-  animation-delay: 5.1s;
-  animation-duration: 7s;
-}
-
 .dream-eye--hero-4 {
   top: 10%;
   left: 6%;
@@ -413,12 +333,6 @@ a {
   transform: rotate(14deg);
   opacity: 0.55;
 }
-.dream-eye--hero-4 .dream-eye__lid--top,
-.dream-eye--hero-4 .dream-eye__lid--bottom {
-  animation-delay: 1.8s;
-  animation-duration: 5.8s;
-}
-
 .dream-eye--hero-5 {
   top: 24%;
   right: 28%;
@@ -427,12 +341,6 @@ a {
   transform: rotate(-12deg);
   opacity: 0.45;
 }
-.dream-eye--hero-5 .dream-eye__lid--top,
-.dream-eye--hero-5 .dream-eye__lid--bottom {
-  animation-delay: 4.4s;
-  animation-duration: 6.2s;
-}
-
 .dream-eye--hero-6 {
   top: 42%;
   left: 14%;
@@ -441,12 +349,6 @@ a {
   transform: rotate(8deg);
   opacity: 0.75;
 }
-.dream-eye--hero-6 .dream-eye__lid--top,
-.dream-eye--hero-6 .dream-eye__lid--bottom {
-  animation-delay: 2.9s;
-  animation-duration: 6.6s;
-}
-
 /* Manifesto Eyes */
 .dream-eye--manifesto-1 {
   top: 14%;
@@ -455,12 +357,6 @@ a {
   height: clamp(40px, 4.4vw, 56px);
   transform: rotate(10deg);
 }
-.dream-eye--manifesto-1 .dream-eye__lid--top,
-.dream-eye--manifesto-1 .dream-eye__lid--bottom {
-  animation-delay: 2.3s;
-  animation-duration: 6s;
-}
-
 .dream-eye--manifesto-2 {
   bottom: 12%;
   right: 8%;
@@ -469,12 +365,6 @@ a {
   transform: rotate(-12deg);
   opacity: 0.6;
 }
-.dream-eye--manifesto-2 .dream-eye__lid--top,
-.dream-eye--manifesto-2 .dream-eye__lid--bottom {
-  animation-delay: 4.8s;
-  animation-duration: 5.5s;
-}
-
 /* Gallery 1 Eyes */
 .dream-eye--g1-1 {
   top: 8%;
@@ -484,11 +374,6 @@ a {
   transform: rotate(-6deg);
   opacity: 0.7;
 }
-.dream-eye--g1-1 .dream-eye__lid--top,
-.dream-eye--g1-1 .dream-eye__lid--bottom {
-  animation-delay: 1.5s;
-}
-
 .dream-eye--g1-2 {
   bottom: 8%;
   right: 7%;
@@ -497,11 +382,6 @@ a {
   transform: rotate(9deg);
   opacity: 0.5;
 }
-.dream-eye--g1-2 .dream-eye__lid--top,
-.dream-eye--g1-2 .dream-eye__lid--bottom {
-  animation-delay: 3.2s;
-}
-
 /* Interlude 1 Eyes */
 .dream-eye--interlude-1 {
   top: 22%;
@@ -510,11 +390,6 @@ a {
   height: clamp(44px, 5vw, 65px);
   transform: rotate(4deg);
 }
-.dream-eye--interlude-1 .dream-eye__lid--top,
-.dream-eye--interlude-1 .dream-eye__lid--bottom {
-  animation-delay: 0.9s;
-}
-
 .dream-eye--interlude-1-alt {
   bottom: 20%;
   left: 8%;
@@ -523,11 +398,6 @@ a {
   transform: rotate(-8deg);
   opacity: 0.65;
 }
-.dream-eye--interlude-1-alt .dream-eye__lid--top,
-.dream-eye--interlude-1-alt .dream-eye__lid--bottom {
-  animation-delay: 3.8s;
-}
-
 /* Gallery 2 Eyes */
 .dream-eye--g2-1 {
   top: 6%;
@@ -537,11 +407,6 @@ a {
   transform: rotate(-14deg);
   opacity: 0.75;
 }
-.dream-eye--g2-1 .dream-eye__lid--top,
-.dream-eye--g2-1 .dream-eye__lid--bottom {
-  animation-delay: 2.1s;
-}
-
 .dream-eye--g2-2 {
   top: 48%;
   left: 4%;
@@ -550,11 +415,6 @@ a {
   transform: rotate(7deg);
   opacity: 0.6;
 }
-.dream-eye--g2-2 .dream-eye__lid--top,
-.dream-eye--g2-2 .dream-eye__lid--bottom {
-  animation-delay: 4.5s;
-}
-
 .dream-eye--g2-3 {
   bottom: 6%;
   right: 12%;
@@ -563,11 +423,6 @@ a {
   transform: rotate(-5deg);
   opacity: 0.45;
 }
-.dream-eye--g2-3 .dream-eye__lid--top,
-.dream-eye--g2-3 .dream-eye__lid--bottom {
-  animation-delay: 1.1s;
-}
-
 /* Interlude 2 Eyes */
 .dream-eye--interlude-2 {
   top: 20%;
@@ -576,11 +431,6 @@ a {
   height: clamp(44px, 5vw, 65px);
   transform: rotate(-10deg);
 }
-.dream-eye--interlude-2 .dream-eye__lid--top,
-.dream-eye--interlude-2 .dream-eye__lid--bottom {
-  animation-delay: 4.2s;
-}
-
 .dream-eye--interlude-2-alt {
   bottom: 22%;
   right: 8%;
@@ -589,11 +439,6 @@ a {
   transform: rotate(12deg);
   opacity: 0.6;
 }
-.dream-eye--interlude-2-alt .dream-eye__lid--top,
-.dream-eye--interlude-2-alt .dream-eye__lid--bottom {
-  animation-delay: 1.7s;
-}
-
 /* Gallery 3 Eyes */
 .dream-eye--g3-1 {
   top: 8%;
@@ -603,11 +448,6 @@ a {
   transform: rotate(5deg);
   opacity: 0.65;
 }
-.dream-eye--g3-1 .dream-eye__lid--top,
-.dream-eye--g3-1 .dream-eye__lid--bottom {
-  animation-delay: 2.8s;
-}
-
 .dream-eye--g3-2 {
   bottom: 10%;
   right: 8%;
@@ -616,11 +456,6 @@ a {
   transform: rotate(-8deg);
   opacity: 0.85;
 }
-.dream-eye--g3-2 .dream-eye__lid--top,
-.dream-eye--g3-2 .dream-eye__lid--bottom {
-  animation-delay: 5.5s;
-}
-
 /* Gallery 4 Eyes */
 .dream-eye--g4-1 {
   top: 10%;
@@ -630,11 +465,6 @@ a {
   transform: rotate(-11deg);
   opacity: 0.6;
 }
-.dream-eye--g4-1 .dream-eye__lid--top,
-.dream-eye--g4-1 .dream-eye__lid--bottom {
-  animation-delay: 1.4s;
-}
-
 .dream-eye--g4-2 {
   bottom: 12%;
   left: 8%;
@@ -643,11 +473,6 @@ a {
   transform: rotate(6deg);
   opacity: 0.55;
 }
-.dream-eye--g4-2 .dream-eye__lid--top,
-.dream-eye--g4-2 .dream-eye__lid--bottom {
-  animation-delay: 3.9s;
-}
-
 /* Interlude 3 Eyes */
 .dream-eye--interlude-3 {
   bottom: 18%;
@@ -656,11 +481,6 @@ a {
   height: clamp(44px, 5vw, 65px);
   transform: rotate(5deg);
 }
-.dream-eye--interlude-3 .dream-eye__lid--top,
-.dream-eye--interlude-3 .dream-eye__lid--bottom {
-  animation-delay: 2.7s;
-}
-
 .dream-eye--interlude-3-alt {
   top: 20%;
   left: 8%;
@@ -669,11 +489,6 @@ a {
   transform: rotate(-15deg);
   opacity: 0.6;
 }
-.dream-eye--interlude-3-alt .dream-eye__lid--top,
-.dream-eye--interlude-3-alt .dream-eye__lid--bottom {
-  animation-delay: 4.8s;
-}
-
 /* Footer Eyes */
 .dream-eye--footer-1 {
   top: 18%;
@@ -683,11 +498,6 @@ a {
   transform: rotate(-6deg);
   opacity: 0.75;
 }
-.dream-eye--footer-1 .dream-eye__lid--top,
-.dream-eye--footer-1 .dream-eye__lid--bottom {
-  animation-delay: 1.5s;
-}
-
 .dream-eye--footer-2 {
   bottom: 12%;
   left: 10%;
@@ -696,12 +506,6 @@ a {
   transform: rotate(10deg);
   opacity: 0.9;
 }
-.dream-eye--footer-2 .dream-eye__lid--top,
-.dream-eye--footer-2 .dream-eye__lid--bottom {
-  animation-delay: 3.1s;
-  animation-duration: 7.5s;
-}
-
 .dream-eye--footer-3 {
   bottom: 18%;
   right: 8%;
@@ -710,26 +514,6 @@ a {
   transform: rotate(-4deg);
   opacity: 0.5;
 }
-.dream-eye--footer-3 .dream-eye__lid--top,
-.dream-eye--footer-3 .dream-eye__lid--bottom {
-  animation-delay: 5.2s;
-}
-
-@keyframes eye-blink-top {
-  0%, 88%, 94%, 100% { transform: scaleY(0); }
-  90%, 92% { transform: scaleY(1); }
-}
-
-@keyframes eye-blink-bottom {
-  0%, 88%, 94%, 100% { transform: scaleY(0); }
-  90%, 92% { transform: scaleY(1); }
-}
-
-@keyframes pupil-dilate {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -50%) scale(1.3); }
-}
-
 @keyframes eye-float {
   0% { transform: translateY(0); }
   100% { transform: translateY(-10px); }
@@ -2066,10 +1850,7 @@ a {
   }
 
   /* 3. Calm dream eye animations in header on mobile */
-  .dream-eye,
-  .dream-eye__pupil,
-  .dream-eye__iris,
-  .dream-eye__lid {
+  .dream-eye {
     animation: none !important;
   }
 
@@ -2279,12 +2060,6 @@ a {
 /* ========================================== */
 /* HIDDEN DETAIL (untold.exe)                 */
 /* ========================================== */
-.dream-eye--shut .dream-eye__lid {
-  animation: none !important; /* pause the blink loop, otherwise some eyes ignore the closed state */
-  transform: scaleY(1) !important;
-  transition: transform 0.12s ease;
-}
-
 .retro-window--secret {
   position: fixed;
   inset: 0;
