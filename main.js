@@ -1,4 +1,5 @@
 import './style.css';
+import captions from './captions.js';
 
 /* ========================================== */
 /* PRELOADER                                  */
@@ -206,6 +207,7 @@ function initLightbox() {
   const lightbox = document.getElementById('lightbox');
   const stack = document.getElementById('lightbox-stack');
   const counter = document.getElementById('lightbox-counter');
+  const caption = document.getElementById('lightbox-caption');
   const btnClose = document.getElementById('lightbox-close');
   const btnPrev = document.getElementById('lightbox-prev');
   const btnNext = document.getElementById('lightbox-next');
@@ -265,6 +267,21 @@ function initLightbox() {
     // Update counter
     if (counter) {
       counter.textContent = `${currentIndex + 1} / ${allPhotos.length}`;
+    }
+
+    // Caption from captions.js (empty fields are skipped)
+    if (caption) {
+      const name = allPhotos[currentIndex].getAttribute('src').split('/').pop().replace(/-800\.webp$/, '');
+      const info = captions[name] || {};
+      const line = [info.ort, info.jahr, info.kamera].filter(Boolean).join(' · ');
+      caption.replaceChildren();
+      if (line) caption.append(line);
+      if (info.notiz) {
+        const note = document.createElement('em');
+        note.textContent = info.notiz;
+        caption.append(note);
+      }
+      caption.hidden = !line && !info.notiz;
     }
   }
 
@@ -429,6 +446,8 @@ function initLightbox() {
       else goPrev();
     }
   }, { passive: true });
+
+  return openLightbox;
 }
 
 /* ========================================== */
@@ -616,6 +635,93 @@ function initRetroWindows() {
 }
 
 /* ========================================== */
+/* START MENU (Navigation + random.exe)       */
+/* ========================================== */
+function initStartMenu(openPhoto) {
+  const button = document.getElementById('start-menu-button');
+  const panel = document.getElementById('start-menu-panel');
+  const random = document.getElementById('start-menu-random');
+  if (!button || !panel) return;
+
+  const setOpen = (open) => {
+    panel.hidden = !open;
+    button.setAttribute('aria-expanded', String(open));
+  };
+
+  button.addEventListener('click', () => setOpen(panel.hidden));
+
+  // Close after choosing an item
+  panel.querySelectorAll('.start-menu__item').forEach((item) => {
+    item.addEventListener('click', () => setOpen(false));
+  });
+
+  // Close when clicking elsewhere or pressing Escape
+  document.addEventListener('click', (e) => {
+    if (!panel.hidden && !e.target.closest('#start-menu')) setOpen(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !panel.hidden) {
+      setOpen(false);
+      button.focus();
+    }
+  });
+
+  if (random && openPhoto) {
+    random.addEventListener('click', () => {
+      const count = document.querySelectorAll('.photo-window__frame img').length;
+      openPhoto(Math.floor(Math.random() * count));
+    });
+  }
+}
+
+/* ========================================== */
+/* HIDDEN DETAIL: click one eye three times   */
+/* ========================================== */
+function initSecretEye() {
+  const secret = document.getElementById('secret-window');
+  const eyes = document.querySelectorAll('.dream-eye');
+  if (!secret || !eyes.length) return;
+
+  let lastEye = null;
+  let clicks = 0;
+  let lastClick = 0;
+  let found = false;
+
+  // Eyes sit behind the content layers, so we check the click position
+  // against each eye instead of relying on the click target.
+  document.addEventListener('click', (e) => {
+    if (found || e.target.closest('a, button, .photo-window__frame, .retro-window, #start-menu, #lightbox')) return;
+
+    const eye = Array.from(eyes).find((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    });
+    if (!eye) return;
+
+    const now = Date.now();
+    clicks = (eye === lastEye && now - lastClick < 1500) ? clicks + 1 : 1;
+    lastEye = eye;
+    lastClick = now;
+
+    // Small blink as feedback that the eye noticed
+    eye.classList.add('dream-eye--shut');
+    setTimeout(() => eye.classList.remove('dream-eye--shut'), 160);
+
+    if (clicks < 3) return;
+    found = true;
+
+    // All eyes close at once, then the hidden window appears
+    setTimeout(() => {
+      eyes.forEach((el) => el.classList.add('dream-eye--shut'));
+      setTimeout(() => {
+        eyes.forEach((el) => el.classList.remove('dream-eye--shut'));
+        secret.hidden = false;
+      }, 1400);
+    }, 200);
+  });
+}
+
+/* ========================================== */
 /* INITIALIZE EVERYTHING                      */
 /* ========================================== */
 initPreloader();
@@ -623,9 +729,11 @@ initCursor();
 initParallax();
 initScrollReveal();
 initTilt();
-initLightbox();
+const openPhoto = initLightbox();
 initLivingEyes();
 initSceneTransitions();
 initRetroWindows();
+initStartMenu(openPhoto);
+initSecretEye();
 
 

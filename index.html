@@ -308,6 +308,7 @@
     <div class="gallery-chapter__title-wrapper reveal-on-scroll">
       <h2 class="gallery-chapter__title">SILENT PLACES</h2>
       <p class="gallery-chapter__subtitle">Architecture of emptiness</p>
+      <p class="gallery-chapter__hint">Hold to reveal colour · Tap to open</p>
     </div>
 
     <div class="gallery-chapter__grid gallery-chapter__grid--scattered">
@@ -937,7 +938,55 @@
       <svg viewBox="0 0 24 24" width="32" height="32"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
 
+    <div class="lightbox__caption" id="lightbox-caption" hidden></div>
     <div class="lightbox__counter" id="lightbox-counter"></div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- START MENU (Navigation)                      -->
+  <!-- ============================================ -->
+  <nav class="start-menu" id="start-menu" aria-label="Site navigation">
+    <div class="start-menu__panel" id="start-menu-panel" hidden>
+      <div class="start-menu__banner">UNTOLD</div>
+      <ul class="start-menu__list">
+        <li><a class="start-menu__item" href="#hero"><span>👁️</span>Start over</a></li>
+        <li class="start-menu__divider" role="separator"></li>
+        <li><a class="start-menu__item" href="#gallery-1"><span>📁</span>Silent Places</a></li>
+        <li><a class="start-menu__item" href="#gallery-2"><span>📁</span>Silent Beings</a></li>
+        <li><a class="start-menu__item" href="#gallery-3"><span>📁</span>Contrasts</a></li>
+        <li><a class="start-menu__item" href="#gallery-4"><span>📁</span>Fragments</a></li>
+        <li class="start-menu__divider" role="separator"></li>
+        <li><button class="start-menu__item" id="start-menu-random" type="button"><span>🎲</span>random.exe</button></li>
+        <li><a class="start-menu__item" href="https://www.instagram.com/jooo__nas" target="_blank" rel="noopener noreferrer"><span>📷</span>Instagram</a></li>
+        <li class="start-menu__divider" role="separator"></li>
+        <li><a class="start-menu__item" href="#contact"><span>🔌</span>Shut down…</a></li>
+      </ul>
+    </div>
+    <button class="start-menu__button" id="start-menu-button" type="button" aria-expanded="false" aria-controls="start-menu-panel">
+      <span class="start-menu__logo">👁️</span>Start
+    </button>
+  </nav>
+
+  <!-- ============================================ -->
+  <!-- HIDDEN DETAIL (click one eye three times)    -->
+  <!-- ============================================ -->
+  <div class="retro-window retro-window--secret" id="secret-window" role="dialog" aria-label="untold.exe" hidden>
+    <div class="retro-window__titlebar">
+      <div class="retro-window__title">
+        <span>👁️</span>
+        <span>untold.exe</span>
+      </div>
+      <button class="retro-window__btn--close" aria-label="Close">✕</button>
+    </div>
+    <div class="retro-window__body">
+      <div class="retro-window__content">
+        <span class="retro-window__msg-icon">🗝️</span>
+        <p class="retro-window__msg">You stopped and looked.<br/>Most people keep scrolling.<br/><br/>Thank you for seeing.</p>
+      </div>
+      <div class="retro-window__actions">
+        <button class="retro-window__action-btn retro-window__btn--dismiss">[I see]</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="./main.js"></script>

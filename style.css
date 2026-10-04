@@ -1968,7 +1968,7 @@ a {
   /* ========================================== */
   /* RETRO WINDOWS: HIDE ON MOBILE              */
   /* ========================================== */
-  .retro-window {
+  .retro-window:not(.retro-window--secret) {
     display: none !important;
   }
 
@@ -2116,3 +2116,184 @@ a {
   }
 }
 
+
+/* ========================================== */
+/* TOUCH HINT (Hold to reveal)                */
+/* ========================================== */
+.gallery-chapter__hint {
+  display: none;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  color: var(--dream-amber);
+  opacity: 0.8;
+  margin-top: 0.9rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+@media (hover: none) {
+  .gallery-chapter__hint {
+    display: block;
+  }
+}
+
+/* ========================================== */
+/* LIGHTBOX CAPTION                           */
+/* ========================================== */
+.lightbox__caption {
+  position: absolute;
+  bottom: 3.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(90vw, 640px);
+  text-align: center;
+  font-family: var(--font-typewriter);
+  font-size: 0.85rem;
+  color: var(--dream-bone);
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  z-index: 10;
+}
+
+.lightbox__caption em {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--dream-muted);
+  letter-spacing: 0.04em;
+}
+
+.lightbox__caption[hidden] {
+  display: none;
+}
+
+/* ========================================== */
+/* START MENU (Retro Navigation)              */
+/* ========================================== */
+.start-menu {
+  position: fixed;
+  left: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: calc(var(--z-photos) + 20);
+  font-family: var(--font-typewriter);
+}
+
+.start-menu__button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px 5px 10px;
+  background: #c0c0c0;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+  font-family: var(--font-typewriter);
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #000000;
+  cursor: pointer;
+}
+
+.start-menu__button[aria-expanded="true"],
+.start-menu__button:active {
+  border-top-color: #000000;
+  border-left-color: #000000;
+  border-right-color: #ffffff;
+  border-bottom-color: #ffffff;
+}
+
+.start-menu__logo {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.start-menu__panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 4px);
+  display: flex;
+  min-width: 230px;
+  background: #c0c0c0;
+  border-top: 2.5px solid #ffffff;
+  border-left: 2.5px solid #ffffff;
+  border-right: 2.5px solid #000000;
+  border-bottom: 2.5px solid #000000;
+  box-shadow:
+    3px 3px 0 rgba(0, 0, 0, 0.7),
+    8px 8px 32px rgba(0, 0, 0, 0.85);
+}
+
+.start-menu__panel[hidden] {
+  display: none;
+}
+
+.start-menu__banner {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding: 10px 4px;
+  background: linear-gradient(0deg, #000080 0%, #1084d0 100%);
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1.05rem;
+  letter-spacing: 0.25em;
+}
+
+.start-menu__list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  flex: 1;
+}
+
+.start-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 16px 7px 10px;
+  background: none;
+  border: none;
+  font-family: var(--font-typewriter);
+  font-size: 0.85rem;
+  color: #000000;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.start-menu__item:hover,
+.start-menu__item:focus-visible {
+  background: #000080;
+  color: #ffffff;
+  outline: none;
+}
+
+.start-menu__divider {
+  margin: 4px 6px;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #ffffff;
+}
+
+/* ========================================== */
+/* HIDDEN DETAIL (untold.exe)                 */
+/* ========================================== */
+.dream-eye--shut .dream-eye__lid {
+  animation: none !important; /* pause the blink loop, otherwise some eyes ignore the closed state */
+  transform: scaleY(1) !important;
+  transition: transform 0.12s ease;
+}
+
+.retro-window--secret {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  height: fit-content;
+  width: min(340px, calc(100vw - 32px));
+  z-index: calc(var(--z-photos) + 30);
+}
+
+.retro-window--secret[hidden] {
+  display: none;
+}
