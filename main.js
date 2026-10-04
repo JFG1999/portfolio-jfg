@@ -224,8 +224,8 @@ function initLightbox() {
       const card = document.createElement('div');
       card.className = 'lightbox__card';
       const cardImg = document.createElement('img');
-      cardImg.src = img.src;
       cardImg.alt = img.alt;
+      cardImg.sizes = '90vw';
       card.appendChild(cardImg);
       stack.appendChild(card);
       return card;
@@ -239,6 +239,13 @@ function initLightbox() {
       card.className = 'lightbox__card';
 
       const diff = i - currentIndex;
+
+      // Only load photos near the current one (previous + next three)
+      const cardImg = card.querySelector('img');
+      if (diff >= -1 && diff <= 3 && !cardImg.srcset) {
+        cardImg.srcset = allPhotos[i].srcset;
+        cardImg.src = allPhotos[i].src;
+      }
 
       if (diff === 0) {
         card.classList.add('lightbox__card--active');
