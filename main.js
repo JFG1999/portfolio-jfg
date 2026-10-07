@@ -945,7 +945,7 @@ function initShutdown() {
     slides.forEach((img) => img.classList.remove('is-visible'));
     counter.textContent = '';
     screen.classList.add('is-ended');
-    type("Now turn off your screen.\nThe real world doesn't pose.");
+    type("Now turn off your screen.\nThe real world doesn't wait.");
     restart.focus();
   }
 
