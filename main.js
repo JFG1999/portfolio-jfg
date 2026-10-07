@@ -785,7 +785,7 @@ function initSceneTransitions() {
 /* RETRO WINDOWS DISMISS (Option D Shatter)   */
 /* ========================================== */
 function initRetroWindows() {
-  const dismissButtons = document.querySelectorAll('.retro-window__btn--close, .retro-window__btn--dismiss');
+  const dismissButtons = document.querySelectorAll('.retro-window:not(.retro-window--turnoff) :is(.retro-window__btn--close, .retro-window__btn--dismiss)');
   if (!dismissButtons.length) return;
 
   dismissButtons.forEach((btn) => {
@@ -858,7 +858,7 @@ function initSecretEye() {
   // Eyes sit behind the content layers, so we check the click position
   // against each eye instead of relying on the click target.
   document.addEventListener('click', (e) => {
-    if (found || e.target.closest('a, button, .photo-window__frame, .retro-window, #start-menu, #lightbox')) return;
+    if (found || e.target.closest('a, button, .photo-window__frame, .retro-window, #start-menu, #lightbox, #shutdown')) return;
 
     const eye = Array.from(eyes).find((el) => {
       const r = el.getBoundingClientRect();
@@ -890,6 +890,125 @@ function initSecretEye() {
 }
 
 /* ========================================== */
+/* SHUT DOWN: hidden reward (five photos)     */
+/* ========================================== */
+// Only visitors who really choose "Shut down…" in the start menu
+// get to see five photos that are nowhere else on the page.
+function initShutdown() {
+  const startItem = document.getElementById('start-menu-shutdown');
+  const dialog = document.getElementById('turnoff-dialog');
+  const screen = document.getElementById('shutdown');
+  if (!startItem || !dialog || !screen) return;
+
+  const text = document.getElementById('shutdown-text');
+  const counter = document.getElementById('shutdown-counter');
+  const restart = document.getElementById('shutdown-restart');
+  const slides = Array.from(screen.querySelectorAll('.shutdown__slides img'));
+  const base = './photos/hidden/';
+  const SLIDE_TIME = 5000;
+
+  let timers = [];
+  let index = -1;
+  let phase = 'off';           // off -> intro -> slides -> end
+  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+  const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+
+  function type(line, done) {
+    text.textContent = '';
+    let i = 0;
+    const step = () => {
+      text.textContent = line.slice(0, ++i);
+      if (i < line.length) later(step, 38);
+      else if (done) later(done, 1400);
+    };
+    step();
+  }
+
+  function showSlide(i) {
+    index = i;
+    slides.forEach((img, k) => img.classList.toggle('is-visible', k === i));
+    counter.textContent = `${i + 1} / ${slides.length}`;
+    clearTimers();
+    later(() => (i + 1 < slides.length ? showSlide(i + 1) : end()), SLIDE_TIME);
+  }
+
+  function startSlides() {
+    phase = 'slides';
+    clearTimers();
+    text.textContent = '';
+    showSlide(0);
+  }
+
+  function end() {
+    phase = 'end';
+    clearTimers();
+    slides.forEach((img) => img.classList.remove('is-visible'));
+    counter.textContent = '';
+    screen.classList.add('is-ended');
+    type("Now turn off your screen.\nThe real world doesn't pose.");
+    restart.focus();
+  }
+
+  function shutDown() {
+    dialog.hidden = true;
+    // load the hidden photos only now
+    slides.forEach((img) => {
+      const name = img.dataset.name;
+      img.srcset = `${base}${name}-1000.webp 1000w, ${base}${name}-1600.webp 1600w`;
+      img.sizes = '88vw';
+      img.src = `${base}${name}-1000.webp`;
+    });
+    screen.hidden = false;
+    screen.classList.remove('is-closing', 'is-dark', 'is-ended');
+    document.body.style.overflow = 'hidden';
+    screen.offsetHeight; // force reflow so the lids animate
+    screen.classList.add('is-closing');
+    phase = 'intro';
+    later(() => {
+      screen.classList.add('is-dark');
+      later(() => type('It is now safe to turn off your computer.', () =>
+        type('But first: five moments\nyou only see when you stop.', startSlides)), 900);
+    }, 1100);
+  }
+
+  function restartSite() {
+    clearTimers();
+    phase = 'off';
+    screen.hidden = true;
+    screen.classList.remove('is-closing', 'is-dark', 'is-ended');
+    slides.forEach((img) => img.classList.remove('is-visible'));
+    text.textContent = '';
+    counter.textContent = '';
+    document.body.style.overflow = '';
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  startItem.addEventListener('click', () => {
+    dialog.hidden = false;
+    document.getElementById('turnoff-yes').focus();
+  });
+  document.getElementById('turnoff-yes').addEventListener('click', shutDown);
+  ['turnoff-no', 'turnoff-x'].forEach((id) => {
+    document.getElementById(id).addEventListener('click', () => { dialog.hidden = true; });
+  });
+  restart.addEventListener('click', (e) => { e.stopPropagation(); restartSite(); });
+
+  // Click / tap: skip the intro, or go to the next photo
+  screen.addEventListener('click', () => {
+    if (phase === 'intro' && screen.classList.contains('is-dark')) startSlides();
+    else if (phase === 'slides') (index + 1 < slides.length ? showSlide(index + 1) : end());
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!dialog.hidden && e.key === 'Escape') dialog.hidden = true;
+    if (screen.hidden) return;
+    if (e.key === 'Escape') restartSite();
+    if (phase === 'slides' && e.key === 'ArrowRight') (index + 1 < slides.length ? showSlide(index + 1) : end());
+    if (phase === 'slides' && e.key === 'ArrowLeft' && index > 0) showSlide(index - 1);
+  });
+}
+
+/* ========================================== */
 /* INITIALIZE EVERYTHING                      */
 /* ========================================== */
 initPreloader();
@@ -903,5 +1022,6 @@ initSceneTransitions();
 initRetroWindows();
 initStartMenu(openPhoto);
 initSecretEye();
+initShutdown();
 
 

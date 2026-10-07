@@ -568,7 +568,7 @@
         <li><button class="start-menu__item" id="start-menu-random" type="button"><span>🎲</span>random.exe</button></li>
         <li><a class="start-menu__item" href="https://www.instagram.com/jooo__nas" target="_blank" rel="noopener noreferrer"><span>📷</span>Instagram</a></li>
         <li class="start-menu__divider" role="separator"></li>
-        <li><a class="start-menu__item" href="#contact"><span>🔌</span>Shut down…</a></li>
+        <li><button class="start-menu__item" id="start-menu-shutdown" type="button"><span>🔌</span>Shut down…</button></li>
       </ul>
     </div>
     <button class="start-menu__button" id="start-menu-button" type="button" aria-expanded="false" aria-controls="start-menu-panel">
@@ -596,6 +596,45 @@
         <button class="retro-window__action-btn retro-window__btn--dismiss">[I see]</button>
       </div>
     </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SHUT DOWN (hidden reward: five unseen photos) -->
+  <!-- ============================================ -->
+  <div class="retro-window retro-window--turnoff" id="turnoff-dialog" role="dialog" aria-label="Turn off computer" hidden>
+    <div class="retro-window__titlebar">
+      <div class="retro-window__title">
+        <span>🔌</span>
+        <span>Turn off computer</span>
+      </div>
+      <button class="retro-window__btn--close" id="turnoff-x" aria-label="Cancel">✕</button>
+    </div>
+    <div class="retro-window__body">
+      <div class="retro-window__content">
+        <span class="retro-window__msg-icon">🌙</span>
+        <p class="retro-window__msg">Are you ready to turn off your screen?<br/>Something is still waiting for you.</p>
+      </div>
+      <div class="retro-window__actions">
+        <button class="retro-window__action-btn" id="turnoff-yes">[Turn Off]</button>
+        <button class="retro-window__action-btn" id="turnoff-no">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="shutdown" id="shutdown" role="dialog" aria-label="Five hidden photos" hidden>
+    <div class="shutdown__lid shutdown__lid--top"></div>
+    <div class="shutdown__lid shutdown__lid--bottom"></div>
+    <div class="shutdown__line"></div>
+    <p class="shutdown__text" id="shutdown-text" aria-live="polite"></p>
+    <div class="shutdown__slides" id="shutdown-slides">
+      <img data-name="hidden-1" alt="Hidden photograph 1" />
+      <img data-name="hidden-2" alt="Hidden photograph 2" />
+      <img data-name="hidden-3" alt="Hidden photograph 3" />
+      <img data-name="hidden-4" alt="Hidden photograph 4" />
+      <img data-name="hidden-5" alt="Hidden photograph 5" />
+    </div>
+    <div class="shutdown__counter" id="shutdown-counter"></div>
+    <button class="shutdown__restart" id="shutdown-restart" type="button">[Restart]</button>
   </div>
 
   <script type="module" src="./main.js"></script>
