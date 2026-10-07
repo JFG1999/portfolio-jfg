@@ -666,7 +666,10 @@ function initLivingEyes() {
         const rect = eye.getBoundingClientRect();
         const dx = e.clientX - (rect.left + rect.width / 2);
         const dy = e.clientY - (rect.top + rect.height / 2);
-        const factor = Math.min(Math.hypot(dx, dy) / 400, 1);
+        const dist = Math.hypot(dx, dy);
+        const factor = Math.min(dist / 400, 1);
+        // at night the eyes only open when the cursor comes close
+        eye.classList.toggle('is-peeking', dist < 160);
         const angle = Math.atan2(dy, dx);
         const maxOffset = 14; // in drawing units
         const iris = eye.querySelector('.dream-eye__iris');
@@ -701,13 +704,19 @@ function initLivingEyes() {
     once();
   }
 
+  // Scrolling too fast makes every visible eye panic
+  window.addEventListener('eyes:panic', () => {
+    visible.forEach((eye) => { if (eye.classList.contains('is-awake')) blink(eye, 1); });
+  });
+
   eyes.forEach((eye) => {
     const fatigue = parseFloat(eye.dataset.fatigue);
     const hectic = fatigue > 0.78;
     const schedule = () => {
       const wait = hectic ? 500 + Math.random() * 2200 : 2500 + Math.random() * 5500;
       setTimeout(() => {
-        if (visible.has(eye) && eye.classList.contains('is-awake') && !eye.classList.contains('dream-eye--shut')) blink(eye, fatigue);
+        const asleep = document.body.classList.contains('is-night') && !eye.classList.contains('is-peeking');
+        if (visible.has(eye) && eye.classList.contains('is-awake') && !asleep && !eye.classList.contains('dream-eye--shut')) blink(eye, fatigue);
         schedule();
       }, wait);
     };
@@ -945,7 +954,11 @@ function initShutdown() {
     slides.forEach((img) => img.classList.remove('is-visible'));
     counter.textContent = '';
     screen.classList.add('is-ended');
-    type("Now turn off your screen.\nThe real world doesn't wait.");
+    const minutes = Math.round(performance.now() / 60000);
+    const spent = minutes < 1
+      ? 'You spent less than a minute here.\nSpend the next hour outside.'
+      : `You spent ${minutes} minute${minutes === 1 ? '' : 's'} here.\nSpend the next ${minutes === 1 ? 'one' : minutes} outside.`;
+    type(spent, () => type("Now turn off your screen.\nThe real world doesn't wait."));
     restart.focus();
   }
 
@@ -1009,6 +1022,156 @@ function initShutdown() {
 }
 
 /* ========================================== */
+/* SMALL HIDDEN REACTIONS                     */
+/* ========================================== */
+// Retro pop-up window, built on the fly (same look as the other windows)
+function showPopup({ icon, title, msg, buttons = ['[OK]'], position = 'center', autoClose = 0 }) {
+  const win = document.createElement('div');
+  win.className = `retro-window retro-window--popup is-${position}`;
+  win.setAttribute('role', 'alertdialog');
+  win.innerHTML = `
+    <div class="retro-window__titlebar">
+      <div class="retro-window__title"><span>${icon}</span><span>${title}</span></div>
+      <button class="retro-window__btn--close" aria-label="Close">✕</button>
+    </div>
+    <div class="retro-window__body">
+      <div class="retro-window__content">
+        <span class="retro-window__msg-icon">${icon}</span>
+        <p class="retro-window__msg">${msg}</p>
+      </div>
+      <div class="retro-window__actions">
+        ${buttons.map((b) => `<button class="retro-window__action-btn">${b}</button>`).join('')}
+      </div>
+    </div>`;
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    win.classList.add('retro-window--shattering');
+    setTimeout(() => win.remove(), 620);
+  };
+  win.querySelectorAll('button').forEach((btn) => btn.addEventListener('click', close));
+  document.body.appendChild(win);
+  if (autoClose) setTimeout(close, autoClose);
+  return win;
+}
+
+// Scrolling too fast: photos blur, the eyes panic, and a window asks you to slow down
+function initRushDetector() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const limit = window.matchMedia('(pointer: coarse)').matches ? 8 : 5; // px per ms
+  let lastY = window.scrollY;
+  let lastT = performance.now();
+  let fastEvents = 0, ignoreUntil = 0, coolUntil = 0, warnings = 0, calmTimer;
+
+  // jumps from the start menu or links are not "rushing"
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('a[href^="#"], #start-menu, #shutdown')) ignoreUntil = performance.now() + 2000;
+  });
+
+  window.addEventListener('scroll', () => {
+    const now = performance.now();
+    const speed = Math.abs(window.scrollY - lastY) / Math.max(1, now - lastT);
+    lastY = window.scrollY;
+    lastT = now;
+    if (now < ignoreUntil || now < coolUntil) return;
+    fastEvents = speed > limit ? fastEvents + 1 : 0;
+    if (fastEvents < 4) return;
+
+    fastEvents = 0;
+    coolUntil = now + 4000;
+    document.body.classList.add('is-rushing');
+    window.dispatchEvent(new Event('eyes:panic'));
+    clearTimeout(calmTimer);
+    calmTimer = setTimeout(() => document.body.classList.remove('is-rushing'), 1400);
+    if (warnings < 2) {
+      warnings++;
+      showPopup({ icon: '⏩', title: 'slow.exe', msg: "Slow down.<br/>You're missing it.", position: 'top', autoClose: 4500 });
+    }
+  }, { passive: true });
+}
+
+// Night: between 23:00 and 05:00 the eyes sleep (add ?night to the URL to test)
+function initNightMode() {
+  const hour = new Date().getHours();
+  const forced = new URLSearchParams(location.search).has('night');
+  if (!forced && hour < 23 && hour >= 5) return;
+  document.body.classList.add('is-night');
+  const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  setTimeout(() => {
+    showPopup({ icon: '🌙', title: 'night.exe', msg: `It's ${time}.<br/>Why are you still scrolling?`, buttons: ['[Sleep]', '5 more minutes'] });
+  }, 2200);
+}
+
+// "Ignore" on reality.exe: the error keeps coming back until the screen is full
+function initErrorCascade() {
+  const ignore = document.getElementById('reality-ignore');
+  if (!ignore) return;
+  ignore.addEventListener('click', () => {
+    const original = ignore.closest('.retro-window');
+    if (!original || original.classList.contains('retro-window--shattering')) return;
+    const start = original.getBoundingClientRect();
+    const count = window.innerWidth > 768 ? 14 : 7;
+    const clones = [];
+    // cascade towards wherever there is room on the screen
+    const dx = start.right + count * 22 > window.innerWidth ? -22 : 22;
+    const dy = start.bottom + count * 22 > window.innerHeight ? -22 : 22;
+    for (let i = 1; i <= count; i++) {
+      setTimeout(() => {
+        const clone = original.cloneNode(true);
+        clone.classList.remove('retro-window--manifesto');
+        clone.classList.add('retro-window--popup', 'retro-window--clone');
+        const clamp = (v, max) => Math.min(Math.max(v, 8), max);
+        clone.style.left = `${clamp(start.left + i * dx, window.innerWidth - start.width - 8)}px`;
+        clone.style.top = `${clamp(start.top + i * dy, window.innerHeight - start.height - 8)}px`;
+        clone.style.width = `${start.width}px`;
+        clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+        document.body.appendChild(clone);
+        clones.push(clone);
+      }, i * 75);
+    }
+    // ...then everything shatters at once
+    setTimeout(() => {
+      [original, ...clones].forEach((win, k) => setTimeout(() => {
+        win.classList.add('retro-window--shattering');
+        setTimeout(() => (win === original ? (win.style.display = 'none') : win.remove()), 620);
+      }, k * 25));
+    }, count * 75 + 700);
+  });
+}
+
+// Leaving the tab
+function initTabWatcher() {
+  const original = document.title;
+  let timer;
+  document.addEventListener('visibilitychange', () => {
+    clearTimeout(timer);
+    if (document.hidden) {
+      document.title = '👁 still here.';
+    } else {
+      document.title = 'You came back.';
+      timer = setTimeout(() => (document.title = original), 2500);
+    }
+  });
+}
+
+// For the curious ones who open the developer console
+function initConsoleNote() {
+  const eye = [
+    '      .-~~~~-.',
+    '    .\'  .--.  \'.',
+    '   (   ( () )   )',
+    '    \'.  \'--\'  .\'',
+    '      \'-~~~~-\'',
+  ].join('\n');
+  console.log(
+    `%c\n${eye}\n\n%cYou looked behind the page. Of course you did.\nNow look at something that isn't a screen.`,
+    'color:#c4a47c;font-family:monospace;font-size:13px',
+    'color:#ede7dc;background:#0e1017;font-family:monospace;font-size:13px;padding:6px 10px'
+  );
+}
+
+/* ========================================== */
 /* INITIALIZE EVERYTHING                      */
 /* ========================================== */
 initPreloader();
@@ -1023,5 +1186,10 @@ initRetroWindows();
 initStartMenu(openPhoto);
 initSecretEye();
 initShutdown();
+initRushDetector();
+initNightMode();
+initErrorCascade();
+initTabWatcher();
+initConsoleNote();
 
 

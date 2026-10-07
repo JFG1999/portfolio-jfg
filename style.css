@@ -1161,7 +1161,7 @@ a {
   border: 1px solid rgba(237, 231, 220, 0.2);
   background: rgba(14, 16, 23, 0.7);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-  transition: box-shadow 0.4s ease, transform 0.4s ease, border-color 0.4s ease;
+  transition: box-shadow 0.4s ease, transform 0.4s ease, border-color 0.4s ease, filter 0.35s ease;
   cursor: none;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -1768,7 +1768,7 @@ a {
   /* ========================================== */
   /* RETRO WINDOWS: HIDE ON MOBILE              */
   /* ========================================== */
-  .retro-window:not(.retro-window--secret):not(.retro-window--turnoff) {
+  .retro-window:not(.retro-window--secret):not(.retro-window--turnoff):not(.retro-window--popup) {
     display: none !important;
   }
 
@@ -2231,3 +2231,24 @@ a {
     transition: none;
   }
 }
+
+/* ========================================== */
+/* SMALL HIDDEN REACTIONS                     */
+/* ========================================== */
+/* Pop-up windows created by main.js (rushing, night, error cascade) */
+.retro-window--popup {
+  position: fixed;
+  z-index: calc(var(--z-photos) + 30);
+  width: min(340px, calc(100vw - 32px));
+}
+
+.retro-window--popup.is-center { inset: 0; margin: auto; height: fit-content; }
+.retro-window--popup.is-top { top: 14vh; left: 0; right: 0; margin: 0 auto; }
+.retro-window--clone { animation: none; }
+
+/* Scrolling too fast: the photos blur */
+body.is-rushing .photo-window__frame { filter: blur(6px); }
+
+/* Night: the eyes sleep and only peek when you come close */
+.is-night .dream-eye:not(.is-peeking) .dream-eye__ball { transform: scaleY(0.04); }
+.is-night .dream-eye:not(.is-peeking) .dream-eye__lidline { opacity: 1; }
